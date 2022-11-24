@@ -1,25 +1,23 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname PROJECT) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
-(require chess)
-(require chess/board)
+; INIT
 (require 2htdp/image)
-(require chess/square)
-
-         
-
-;;;WHITE TOKEN
-(define W-TOKEN 
-   (circle 25 "solid" "white"))
-
-;;;BLACK TOKEN
-(define B-TOKEN
-   (circle 25 "solid" "gray"))
-
-;;;BOARD-IMAGE
+(require 2htdp/universe)
 
 ;;SQUARE-SIZE
 (define SIZE 50)
+
+;;;WHITE TOKEN
+(define W-TOKEN 
+   (circle (/ SIZE 2) "solid" "green"))
+
+;;;BLACK TOKEN
+(define B-TOKEN
+   (circle (/ SIZE 2) "solid" "red"))
+
+;;;BOARD-IMAGE
+
 
 ;;BORDER-SQUARE
 (define BORDER (square (+(* SIZE 8)(* (* SIZE 8) (/ 1 26.67 )))"solid" "brown"))
@@ -97,10 +95,92 @@
                       (square SIZE "solid" "white")
                       (square SIZE "solid" "black")
                       (square SIZE "solid" "white"))))
-           
+
+
 ;;COMPLETE-BOARD
-(define C-BOARD (overlay BOARD BORDER))            
-              
-              
+(define C-BOARD (overlay BOARD BORDER))    
+
+
+
+
+
+   
+
+
+
+
+;State
+(define-struct app-state (field wtl btl quit?))
+
+(define W-TOKENS-LIST (list
+                        (make-posn 1 0)
+                        (make-posn 3 0)
+                        (make-posn 5 0)
+                        (make-posn 7 0)
+                        (make-posn 0 1)
+                        (make-posn 2 1)
+                        (make-posn 4 1)
+                        (make-posn 6 1)
+                        (make-posn 1 2)
+                        (make-posn 3 2)
+                        (make-posn 5 2)
+                        (make-posn 7 2)))
+
+(define B-TOKENS-LIST (list
+                        (make-posn 0 5)
+                        (make-posn 2 5)
+                        (make-posn 4 5)
+                        (make-posn 6 5)
+                        (make-posn 1 6)
+                        (make-posn 3 6)
+                        (make-posn 5 6)
+                        (make-posn 7 6)
+                        (make-posn 0 7)
+                        (make-posn 2 7)
+                        (make-posn 4 7)
+                        (make-posn 6 7)))
+
+
+
+(define INITIAL-STATE (make-app-state
+                       BOARD
+                       W-TOKENS-LIST
+                       B-TOKENS-LIST
+                       #false))
+
+;///////////////////
+
+
+;DRAWING
+(define (draw state)
+  (draw-tokens (draw-tokens (app-state-field state)
+                            (app-state-wtl state) W-TOKEN)
+               (app-state-btl state) B-TOKEN)
+  )
+
+
+(define (draw-tokens field token-list token-image)
+  (cond
+    [(null? token-list) field]
+    [else (draw-tokens (overlay/xy token-image (* -1 (* SIZE (posn-x (first token-list))))
+                      (* -1 (* SIZE (posn-y (first token-list)))) field) (rest token-list) token-image)])
+  )
+
+;///////////
+
+
+
+; Main app
+(big-bang INITIAL-STATE
+  [to-draw draw]
+;  [on-mouse handle-mouse]
+;  [on-key handle-key]
+;  [stop-when quit?]
+  )
+
+
+
+
+
 
 
