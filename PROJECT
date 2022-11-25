@@ -100,70 +100,99 @@
 ;;COMPLETE-BOARD
 (define C-BOARD (overlay BOARD BORDER))    
 
+;; Data Type - Token1 and Token2
+; A Token1 and a Token2 are Posns
 
+;; Data Type - Maybe<Token1>
+; A Maybe<Token1> is one of:
+; - a Token1 ; Player 1's token is present
+; - #false  ; Player 1's token is missing 
+; interpretation: a token from player 1 that may be missing
 
+;; Data Type - Maybe<Token2>
+; A Maybe<Token2> is one of:
+; - a Token2 ; Player 2's token is present
+; - #false  ; Player 2's token is missing 
+; interpretation: a token from player 2 that may be missing
 
-
-   
-
-
+;: Data Type - Table
+; A Table is a structure (make-Table Image Maybe<Token1> Maybe<Token2>)
+;    where          Image          : Image
+;                   Present-Token1 : Maybe<Token1>
+;                   Present-Token2 : Maybe<Token2>
+;
+; interpretation: one of the following state:
+;                 - a full board of tokens, or a board with at list one token
+;                 - a Token1 that may be missing
+;                 - a Token2 that may be missing
 
 
 ;State
-(define-struct app-state (field wtl btl quit?))
+(define-struct Table [Image Present-Token1 Present-Token2])
+
+;; Data Type - Token
+; A Token is a structure (make-Token color super move1 move2 move3 move4 dead coordinates):
+;   - color: is eather the String "White" or "Black"
+;   - super: Boolean 
+;   - move1: Boolean
+;   - move2: Boolean
+;   - move3: Boolean
+;   - move4: Boolean
+;   - dead: Boolean
+;   - coordinates: Posn<Number> where Number is a posotive integer number between 0 and 7 (both included)
+
+(define-struct Token [color super move1 move2 move3 move4 dead coordinates])
 
 (define W-TOKENS-LIST (list
-                        (make-posn 1 0)
-                        (make-posn 3 0)
-                        (make-posn 5 0)
-                        (make-posn 7 0)
-                        (make-posn 0 1)
-                        (make-posn 2 1)
-                        (make-posn 4 1)
-                        (make-posn 6 1)
-                        (make-posn 1 2)
-                        (make-posn 3 2)
-                        (make-posn 5 2)
-                        (make-posn 7 2)))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 1))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 3))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 5))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 7))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 0))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 2))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 4))
+                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 6))
+                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 1))
+                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 3))
+                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 5))
+                        (make-Token "White" #false #false #false #true #false #false (make-posn 2 7))))
 
-(define B-TOKENS-LIST (list
-                        (make-posn 0 5)
-                        (make-posn 2 5)
-                        (make-posn 4 5)
-                        (make-posn 6 5)
-                        (make-posn 1 6)
-                        (make-posn 3 6)
-                        (make-posn 5 6)
-                        (make-posn 7 6)
-                        (make-posn 0 7)
-                        (make-posn 2 7)
-                        (make-posn 4 7)
-                        (make-posn 6 7)))
+(define B-TOKENS-LIST (list 
+                        (make-Token "Black" #false #false #true #false #false #false (make-posn 5 0))
+                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 2))
+                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 4))
+                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 6))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 1))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 3))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 5))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 7))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 0))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 2))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 4))
+                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 6))))
 
 
 
-(define INITIAL-STATE (make-app-state
+(define INITIAL-STATE (make-Table
                        BOARD
                        W-TOKENS-LIST
-                       B-TOKENS-LIST
-                       #false))
+                       B-TOKENS-LIST))
 
 ;///////////////////
 
 
 ;DRAWING
 (define (draw state)
-  (draw-tokens (draw-tokens (app-state-field state)
-                            (app-state-wtl state) W-TOKEN)
-               (app-state-btl state) B-TOKEN)
-  )
+  (draw-tokens (draw-tokens (Table-Image state)
+                            (Table-Present-Token1 state) W-TOKEN)
+               (Table-Present-Token2 state) B-TOKEN))
 
 
-(define (draw-tokens field token-list token-image)
+(define (draw-tokens Image token-list token-image)
   (cond
-    [(null? token-list) field]
-    [else (draw-tokens (overlay/xy token-image (* -1 (* SIZE (posn-x (first token-list))))
-                      (* -1 (* SIZE (posn-y (first token-list)))) field) (rest token-list) token-image)])
+    [(null? token-list) Image]
+    [else (draw-tokens (overlay/xy token-image (* -1 (* SIZE (posn-y (Token-coordinates (first token-list)))))
+                      (* -1 (* SIZE (posn-x (Token-coordinates (first token-list))))) Image) (rest token-list) token-image)])
   )
 
 ;///////////
