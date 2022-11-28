@@ -128,7 +128,7 @@
 
 
 ;State
-(define-struct Table [Image Present-Token1 Present-Token2])
+(define-struct Table [Image Tokens Control])
 
 ;; Data Type - Token
 ; A Token is a structure (make-Token color super move1 move2 move3 move4 dead coordinates):
@@ -143,73 +143,115 @@
 
 (define-struct Token [color super move1 move2 move3 move4 dead coordinates])
 
-(define W-TOKENS-LIST (list
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 1))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 3))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 5))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 0 7))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 0))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 2))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 4))
-                        (make-Token "White" #false #false #false #false #false #false (make-posn 1 6))
-                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 1))
-                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 3))
-                        (make-Token "White" #false #false #false #true #true #false (make-posn 2 5))
-                        (make-Token "White" #false #false #false #true #false #false (make-posn 2 7))))
+(define TOKENS-LIST (list
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 0 1))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 0 3))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 0 5))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 0 7))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 1 0))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 1 2))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 1 4))
+                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 1 6))
+                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 2 1))
+                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 2 3))
+                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 2 5))
+                        (make-Token W-TOKEN #false #false #false #true  #false #false (make-posn 2 7))
 
-(define B-TOKENS-LIST (list 
-                        (make-Token "Black" #false #false #true #false #false #false (make-posn 5 0))
-                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 2))
-                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 4))
-                        (make-Token "Black" #false #true #true #false #false #false (make-posn 5 6))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 1))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 3))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 5))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 6 7))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 0))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 2))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 4))
-                        (make-Token "Black" #false #false #false #false #false #false (make-posn 7 6))))
+                        (make-Token B-TOKEN #false #false #true  #false #false #false (make-posn 5 0))
+                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 5 2))
+                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 5 4))
+                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 5 6))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 6 1))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 6 3))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 6 5))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 6 7))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 7 0))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 7 2))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 7 4))
+                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 7 6))
+                        ))
 
+
+(define-struct Control [Start End])
 
 
 (define INITIAL-STATE (make-Table
                        BOARD
-                       W-TOKENS-LIST
-                       B-TOKENS-LIST))
+                       TOKENS-LIST
+                       (make-Control #false #false)
+                       ))
 
 ;///////////////////
 
 
 ;DRAWING
 (define (draw state)
-  (draw-tokens (draw-tokens (Table-Image state)
-                            (Table-Present-Token1 state) W-TOKEN)
-               (Table-Present-Token2 state) B-TOKEN))
+  (draw-tokens (Table-Image state) (Table-Tokens state)))
 
 
-(define (draw-tokens Image token-list token-image)
+(define (draw-tokens Image token-list)
   (cond
     [(null? token-list) Image]
-    [else (draw-tokens (overlay/xy token-image (* -1 (* SIZE (posn-y (Token-coordinates (first token-list)))))
-                      (* -1 (* SIZE (posn-x (Token-coordinates (first token-list))))) Image) (rest token-list) token-image)])
+    [else (draw-tokens (overlay/xy (Token-color (first token-list)) (* -1 (* SIZE (posn-y (Token-coordinates (first token-list)))))
+                      (* -1 (* SIZE (posn-x (Token-coordinates (first token-list))))) Image) (rest token-list))])
   )
 
 ;///////////
+
+
+;Mouse movement
+(define (handle-mouse state x y event)
+  (cond
+    [(string=? "button-down" event)
+     (make-Table 
+      (Table-Image state)
+      (Table-Tokens state)
+      (make-Control (get-id-by-position (make-posn x y)) #false))]
+    [(and (string=? "drag" event) (not (false? (Control-Start (Table-Control state)))))
+     (make-Table 
+      (Table-Image state)
+      (Table-Tokens state)
+      (make-Control (Control-Start (Table-Control state)) (get-id-by-position (make-posn x y))))]
+   
+    [(and (string=? "button-up" event) (not (false? (Control-Start (Table-Control state)))))
+     (make-Table
+      (Table-Image state)
+      (change-position state) 
+      (Table-Control state))]
+    [else state]))
+
+
+
+(define (get-id-by-position pos) 
+  (make-posn (floor (- (abs (/ (posn-x pos) SIZE)) 0.5)) (floor (- (abs (/ (posn-y pos) SIZE)) 0.5)))) ; Uncalibrated version, to test the rest of the functionality
+
+
+(define (change-position state)
+  (add-element (make-Table
+                (Table-Image state)
+                (remove-element state)
+                (Table-Control state))))
+
+(define (remove-element state)
+  (remove #false (map (lambda (item)
+         (if (and (= (posn-x (Token-coordinates item)) (posn-x (Control-Start (Table-Control state))))
+                  (= (posn-y (Token-coordinates item)) (posn-y (Control-Start (Table-Control state))))) #false item))
+         (Table-Tokens state))))
+
+(define (add-element state)
+  (append (Table-Tokens state) (list (make-Token W-TOKEN #false #false #false #false #false #false
+                                           (make-posn (posn-x (Control-End (Table-Control state)))
+                                                      (posn-y (Control-End (Table-Control state))))))))
+
+
+;/////////////////
 
 
 
 ; Main app
 (big-bang INITIAL-STATE
   [to-draw draw]
-;  [on-mouse handle-mouse]
+  [on-mouse handle-mouse]
 ;  [on-key handle-key]
 ;  [stop-when quit?]
   )
-
-
-
-
-
-
-
