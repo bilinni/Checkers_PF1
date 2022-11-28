@@ -141,47 +141,48 @@
 ;   - dead: Boolean
 ;   - coordinates: Posn<Number> where Number is a posotive integer number between 0 and 7 (both included)
 
-(define-struct Token [color super move1 move2 move3 move4 dead coordinates])
+(define-struct Token [team super coordinates])
+
+(define-struct team [name image])
 
 (define TOKENS-LIST (list
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 1 0))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 3 0))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 5 0))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 7 0))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 0 1))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 2 1))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 4 1))
-                        (make-Token W-TOKEN #false #false #false #false #false #false (make-posn 6 1))
-                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 1 2))
-                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 3 2))
-                        (make-Token W-TOKEN #false #false #false #true  #true  #false (make-posn 5 2))
-                        (make-Token W-TOKEN #false #false #false #true  #false #false (make-posn 7 2))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 1 0))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 3 0))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 5 0))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 1 2))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 3 2))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 5 2))
+                        (make-Token (make-team "W" W-TOKEN) #false (make-posn 7 2))
 
-                        (make-Token B-TOKEN #false #false #true  #false #false #false (make-posn 0 5))
-                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 2 5))
-                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 4 5))
-                        (make-Token B-TOKEN #false #true  #true  #false #false #false (make-posn 6 5))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 1 6))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 3 6))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 5 6))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 7 6))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 0 7))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 2 7))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 4 7))
-                        (make-Token B-TOKEN #false #false #false #false #false #false (make-posn 6 7))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 0 5))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 2 5))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 4 5))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 5 6))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 7 6))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 0 7))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 2 7))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 4 7))
+                        (make-Token (make-team "B" B-TOKEN) #false (make-posn 6 7))
                         ))
 
 
 (define-struct Control [Start End])
 
-(define-struct player [team token])
 
 
 (define INITIAL-STATE (make-Table
                        BOARD
                        TOKENS-LIST
                        (make-Control #false #false)
-                       (make-player "W" W-TOKEN)
+                       (make-team "W" W-TOKEN)
                        ))
 
 ;///////////////////
@@ -195,7 +196,7 @@
 (define (draw-tokens Image token-list)
   (cond
     [(null? token-list) Image]
-    [else (draw-tokens (overlay/xy (Token-color (first token-list)) (* -1 (* SIZE (posn-x (Token-coordinates (first token-list)))))
+    [else (draw-tokens (overlay/xy (team-image ;;-(Token-team (first token-list))) (* -1 (* SIZE (posn-x (Token-coordinates (first token-list)))))
                       (* -1 (* SIZE (posn-y (Token-coordinates (first token-list))))) Image) (rest token-list))])
   )
 
@@ -219,7 +220,11 @@
       (Table-Player state))]
    
     [(and (string=? "button-up" event) (not (false? (Control-Start (Table-Control state)))))
-     (change-position state)]
+     (if (allow-move state (get-current-token state)) (change-position state) (make-Table
+                                               (Table-Image state)
+                                               (remove-element state)
+                                               (make-Control #false #false)
+                                               (Table-Player state)))]
     [else state]))
 
 
@@ -246,9 +251,11 @@
          (Table-Tokens state))))
 
 (define (add-element state)
-  (append (Table-Tokens state) (list (make-Token (player-token (Table-Player state)) #false #false #false #false #false #false
-                                           (make-posn (posn-x (Control-End (Table-Control state)))
-                                                      (posn-y (Control-End (Table-Control state))))))))
+  (append (Table-Tokens state) (list (make-Token
+                                      (Table-Player state)
+                                      #false
+                                      (make-posn (posn-x (Control-End (Table-Control state)))
+                                                 (posn-y (Control-End (Table-Control state))))))))
 
 
 ;/////////////////
@@ -256,7 +263,7 @@
 
 ;Movement checker
 
-(define (get-current-token-by-position state) ;Return token that will move or empty list
+(define (get-current-token state) ;Return token that will move or empty list
   (filter (lambda (item)
          (and (= (posn-x (Token-coordinates item)) (posn-x (Control-Start (Table-Control state))))
                   (= (posn-y (Token-coordinates item)) (posn-y (Control-Start (Table-Control state))))))
@@ -265,20 +272,20 @@
 
 
 
+(define (allow-move state current-token) #true)
+ ; (cond
+  ;  [(= (length current-token) 0) #false]
+   ; [(string=? (team-name (Table-Player state)) (Token-color (first current-token)))]
+    
+   ; ))
+           
 
 
 
 (define (change-player state)
   (cond
-    [(string=? (player-team (Table-Player state)) "W") (make-player "B" B-TOKEN)]
-    [else (make-player "W" W-TOKEN)]))
-
-
-;(define (move1 state) 
-;  (cond
-;    [(posn-add (Token-coordinates (get-current-token state)) (+1 -1)) ]
-;    ))
-
+    [(string=? (team-name (Table-Player state)) "W") (make-team "B" B-TOKEN)]
+    [else (make-team "W" W-TOKEN)]))
 
 
 
