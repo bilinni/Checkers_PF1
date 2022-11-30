@@ -10,7 +10,7 @@
 
 ;;;WHITE TOKEN
 (define W-TOKEN 
-   (circle (/ SIZE 2) "solid" "green"))
+   (circle (/ SIZE 2) "solid" "gray"))
 
 ;;;BLACK TOKEN
 (define B-TOKEN
@@ -196,7 +196,7 @@
 (define (draw-tokens Image token-list)
   (cond
     [(null? token-list) Image]
-    [else (draw-tokens (overlay/xy (team-image ;;-(Token-team (first token-list))) (* -1 (* SIZE (posn-x (Token-coordinates (first token-list)))))
+    [else (draw-tokens (overlay/xy (team-image (Token-team (first token-list))) (* -1 (* SIZE (posn-x (Token-coordinates (first token-list)))))
                       (* -1 (* SIZE (posn-y (Token-coordinates (first token-list))))) Image) (rest token-list))])
   )
 
@@ -220,12 +220,10 @@
       (Table-Player state))]
    
     [(and (string=? "button-up" event) (not (false? (Control-Start (Table-Control state)))))
-     (if (allow-move state (get-current-token state)) (change-position state) (make-Table
-                                               (Table-Image state)
-                                               (remove-element state)
-                                               (make-Control #false #false)
-                                               (Table-Player state)))]
+     (if (allow-move state (get-token-by-pos state (Control-Start (Table-Control state))) (get-token-by-pos state (Control-End (Table-Control state))))
+         (change-position state) state)]
     [else state]))
+
 
 
 
@@ -263,21 +261,43 @@
 
 ;Movement checker
 
-(define (get-current-token state) ;Return token that will move or empty list
+(define (get-token-by-pos state pos) ;Return list<token> or empty list
   (filter (lambda (item)
-         (and (= (posn-x (Token-coordinates item)) (posn-x (Control-Start (Table-Control state))))
-                  (= (posn-y (Token-coordinates item)) (posn-y (Control-Start (Table-Control state))))))
+         (and (= (posn-x (Token-coordinates item)) (posn-x pos))
+                  (= (posn-y (Token-coordinates item)) (posn-y pos))))
          (Table-Tokens state))
     )
 
 
 
-(define (allow-move state current-token) #true)
- ; (cond
-  ;  [(= (length current-token) 0) #false]
-   ; [(string=? (team-name (Table-Player state)) (Token-color (first current-token)))]
+(define (allow-move state start-token end-token)
+  (cond
+    [(= (length start-token) 0) #false]
+    [(not (string=? (team-name (Table-Player state)) (team-name (Token-team (first start-token))))) #false]
+    [(not (= (length end-token) 0)) #false]
+
     
-   ; ))
+
+    [(not
+      (or
+       (or (and (string=? (team-name (Token-team (first start-token))) "W")
+                (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
+                     (= (+ (posn-y (Token-coordinates (first start-token)))  1) (posn-y (Control-End (Table-Control state))))))
+           (and (string=? (team-name (Token-team (first start-token))) "W")
+                (and (= (+ (posn-x (Token-coordinates (first start-token)))  -1) (posn-x (Control-End (Table-Control state))))
+                     (= (+ (posn-y (Token-coordinates (first start-token))) 1) (posn-y (Control-End (Table-Control state)))))))
+
+       (or (and (string=? (team-name (Token-team (first start-token))) "B")
+                (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
+                     (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state))))))
+           (and (string=? (team-name (Token-team (first start-token))) "B")
+                (and (= (+ (posn-x (Token-coordinates (first start-token))) -1) (posn-x (Control-End (Table-Control state))))
+                     (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state))))))) 
+      )) #false]
+
+    
+    [else #true]
+    ))
            
 
 
