@@ -220,9 +220,20 @@
       (Table-Player state))]
    
     [(and (string=? "button-up" event) (not (false? (Control-Start (Table-Control state)))))
-     (if (allow-move state (get-token-by-pos state (Control-Start (Table-Control state))) (get-token-by-pos state (Control-End (Table-Control state))))
-         (change-position state) state)]
+     (if
+       (allow-move? state (get-token-by-pos state (Control-Start (Table-Control state)))
+                     (get-token-by-pos state (Control-End (Table-Control state)))) (change-position state) state)]
     [else state]))
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -236,16 +247,16 @@
    (Table-Image state)
    (add-element (make-Table
                  (Table-Image state)
-                 (remove-element state)
+                 (remove-element state (Control-Start (Table-Control state)))
                  (Table-Control state)
                  (Table-Player state)))
    (make-Control #false #false)
    (change-player state)))
 
-(define (remove-element state)
+(define (remove-element state pos) ; state and posn of token we want delete
   (remove #false (map (lambda (item)
-         (if (and (= (posn-x (Token-coordinates item)) (posn-x (Control-Start (Table-Control state))))
-                  (= (posn-y (Token-coordinates item)) (posn-y (Control-Start (Table-Control state))))) #false item))
+         (if (and (= (posn-x (Token-coordinates item)) (posn-x pos))
+                  (= (posn-y (Token-coordinates item)) (posn-y pos))) #false item))
          (Table-Tokens state))))
 
 (define (add-element state)
@@ -270,35 +281,82 @@
 
 
 
-(define (allow-move state start-token end-token)
-  (cond
-    [(= (length start-token) 0) #false]
-    [(not (string=? (team-name (Table-Player state)) (team-name (Token-team (first start-token))))) #false]
-    [(not (= (length end-token) 0)) #false]
+(define (allow-move? state start-token end-token)    
+    (cond
+           [(= (length start-token) 0) #false]
+           [(not (string=? (team-name (Table-Player state)) (team-name (Token-team (first start-token))))) #false]
+           [(not (= (length end-token) 0)) #false]
 
-    
+       [(not (or
+        (or (and (string=? (team-name (Token-team (first start-token))) "W")
+                 (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
+                      (= (+ (posn-y (Token-coordinates (first start-token)))  1) (posn-y (Control-End (Table-Control state))))))
+            (and (string=? (team-name (Token-team (first start-token))) "W")
+                 (and (= (+ (posn-x (Token-coordinates (first start-token)))  -1) (posn-x (Control-End (Table-Control state))))
+                      (= (+ (posn-y (Token-coordinates (first start-token))) 1) (posn-y (Control-End (Table-Control state)))))))
 
-    [(not
-      (or
-       (or (and (string=? (team-name (Token-team (first start-token))) "W")
-                (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
-                     (= (+ (posn-y (Token-coordinates (first start-token)))  1) (posn-y (Control-End (Table-Control state))))))
-           (and (string=? (team-name (Token-team (first start-token))) "W")
-                (and (= (+ (posn-x (Token-coordinates (first start-token)))  -1) (posn-x (Control-End (Table-Control state))))
-                     (= (+ (posn-y (Token-coordinates (first start-token))) 1) (posn-y (Control-End (Table-Control state)))))))
+        (or (and (string=? (team-name (Token-team (first start-token))) "B")
+                 (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
+                      (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state))))))
+            (and (string=? (team-name (Token-team (first start-token))) "B")
+                 (and (= (+ (posn-x (Token-coordinates (first start-token))) -1) (posn-x (Control-End (Table-Control state))))
+                      (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state)))))))
 
-       (or (and (string=? (team-name (Token-team (first start-token))) "B")
-                (and (= (+ (posn-x (Token-coordinates (first start-token)))  1) (posn-x (Control-End (Table-Control state))))
-                     (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state))))))
-           (and (string=? (team-name (Token-team (first start-token))) "B")
-                (and (= (+ (posn-x (Token-coordinates (first start-token))) -1) (posn-x (Control-End (Table-Control state))))
-                     (= (+ (posn-y (Token-coordinates (first start-token))) -1) (posn-y (Control-End (Table-Control state))))))) 
-      )) #false]
+        (and (string=? (team-name (Token-team (first start-token))) "W")
+          (and
+           (and (= (+ (posn-x (Token-coordinates (first start-token)))  2) (posn-x (Control-End (Table-Control state))))
+                (= (+ (posn-y (Token-coordinates (first start-token)))  2) (posn-y (Control-End (Table-Control state)))))
+           (if (not (= (length (get-token-by-pos state (make-posn
+                                                        (+ (posn-x (Token-coordinates (first start-token)))  1)
+                                                        (+ (posn-y (Token-coordinates (first start-token)))  1)))) 0))
+               (string=? (team-name (Token-team (first (get-token-by-pos state (make-posn
+                                                                                (+ (posn-x (Token-coordinates (first start-token)))  1)
+                                                                                (+ (posn-y (Token-coordinates (first start-token)))  1)))))) "B") #false)))
+     
 
-    
-    [else #true]
-    ))
-           
+     (and (string=? (team-name (Token-team (first start-token))) "W")
+          (and
+           (and (= (+ (posn-x (Token-coordinates (first start-token))) -2) (posn-x (Control-End (Table-Control state))))
+                (= (+ (posn-y (Token-coordinates (first start-token)))  2) (posn-y (Control-End (Table-Control state)))))
+           (if (not (= (length (get-token-by-pos state (make-posn
+                                                        (+ (posn-x (Token-coordinates (first start-token))) -1)
+                                                        (+ (posn-y (Token-coordinates (first start-token)))  1)))) 0))
+               (string=? (team-name (Token-team (first (get-token-by-pos state (make-posn
+                                                                                (+ (posn-x (Token-coordinates (first start-token))) -1)
+                                                                                (+ (posn-y (Token-coordinates (first start-token)))  1)))))) "B") #false)))
+     
+     
+     (and (string=? (team-name (Token-team (first start-token))) "B")
+             (and
+              (and (= (+ (posn-x (Token-coordinates (first start-token)))  2) (posn-x (Control-End (Table-Control state))))
+                   (= (+ (posn-y (Token-coordinates (first start-token))) -2) (posn-y (Control-End (Table-Control state)))))
+              (if (not (= (length (get-token-by-pos state (make-posn
+                                                           (+ (posn-x (Token-coordinates (first start-token)))  1)
+                                                           (+ (posn-y (Token-coordinates (first start-token))) -1)))) 0))
+                  (string=? (team-name (Token-team (first (get-token-by-pos state (make-posn
+                                                                                   (+ (posn-x (Token-coordinates (first start-token)))  1)
+                                                                                   (+ (posn-y (Token-coordinates (first start-token))) -1)))))) "W") #false)))
+     
+     
+     
+     (and (string=? (team-name (Token-team (first start-token))) "B")
+          (and
+           (and (= (+ (posn-x (Token-coordinates (first start-token))) -2) (posn-x (Control-End (Table-Control state))))
+                (= (+ (posn-y (Token-coordinates (first start-token))) -2) (posn-y (Control-End (Table-Control state)))))
+           (if (not (= (length (get-token-by-pos state (make-posn
+                                                        (+ (posn-x (Token-coordinates (first start-token))) -1)
+                                                        (+ (posn-y (Token-coordinates (first start-token))) -1)))) 0))
+               (string=? (team-name (Token-team (first (get-token-by-pos state (make-posn
+                                                                                (+ (posn-x (Token-coordinates (first start-token))) -1)
+                                                                                (+ (posn-y (Token-coordinates (first start-token))) -1)))))) "W") #false)))
+     
+        
+        )) #false]
+
+       [else #true]))
+
+
+
 
 
 
