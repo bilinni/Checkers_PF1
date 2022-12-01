@@ -128,7 +128,7 @@
 
 
 ;State
-(define-struct Table [Image Tokens Control Player])
+(define-struct Table [Image Tokens Control Player Win?])
 
 ;; Data Type - Token
 ; A Token is a structure (make-Token color super move1 move2 move3 move4 dead coordinates):
@@ -183,6 +183,7 @@
                        TOKENS-LIST
                        (make-Control #false #false)
                        (make-team "W" W-TOKEN)
+                       #false
                        ))
 
 ;///////////////////
@@ -211,13 +212,15 @@
       (Table-Image state)
       (Table-Tokens state)
       (make-Control (get-id-by-position (make-posn x y)) (get-id-by-position (make-posn x y)))
-      (Table-Player state))]
+      (Table-Player state)
+      (Table-Win? state))]
     [(and (string=? "drag" event) (not (false? (Control-Start (Table-Control state)))))
      (make-Table 
       (Table-Image state)
       (Table-Tokens state)
       (make-Control (Control-Start (Table-Control state)) (get-id-by-position (make-posn x y)))
-      (Table-Player state))]
+      (Table-Player state)
+      (Table-Win? state))]
    
     [(and (string=? "button-up" event) (not (false? (Control-Start (Table-Control state)))))
      (cond
@@ -229,7 +232,8 @@
          (Table-Image state)
         (remove-element (change-position state) (find-middle (Control-Start (Table-Control state)) (Control-End (Table-Control state))))
         (make-Control (Control-Start (Table-Control state)) (get-id-by-position (make-posn x y)))
-        (change-player state))]
+        (change-player state)
+        (check-win state))]
        [else state])]
     [else state]))
 
@@ -257,9 +261,11 @@
                  (Table-Image state)
                  (remove-element state (Control-Start (Table-Control state)))
                  (Table-Control state)
-                 (Table-Player state)))
+                 (Table-Player state)
+                 (Table-Win? state)))
    (make-Control #false #false)
-   (change-player state)))
+   (change-player state)
+   (check-win state)))
 
 (define (remove-element state pos) ; state and posn of token we want delete
   (remove #false (map (lambda (item)
@@ -391,6 +397,23 @@
 
 
 
+
+(define (check-win state)
+  (if (or (= (length (filter (lambda (item)
+          (string=? (team-name (Token-team item)) "W"))
+         (Table-Tokens state))) 0)
+          (= (length (filter (lambda (item)
+          (string=? (team-name (Token-team item)) "B"))
+         (Table-Tokens state))) 0)) #true #false))
+
+
+(define (win? state)
+  (if (Table-Win? state) #true #false))
+
+
+
+
+
 ;//////////////////
 
 
@@ -400,5 +423,5 @@
   [to-draw draw]
   [on-mouse handle-mouse]
 ;  [on-key handle-key]
-;  [stop-when quit?]
+  [stop-when win?]
   )
