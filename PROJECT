@@ -29,78 +29,23 @@
 (define BORDER (square (+(* SIZE 8)(* (* SIZE 8) (/ 1 26.67 )))"solid" "brown"))
 
 ;;BOARD 
-(define BOARD(above
-              (beside (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black"))
+(define BOARD (above
+              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
               
-              (beside (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white"))
+              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
 
-              (beside (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black"))
+              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
               
-              (beside (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white"))
+              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
+              
+              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              
+              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
+              
+              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              
+              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))))
 
-              (beside (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black"))
-              
-              (beside (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white"))
-
-              (beside (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black"))
-              
-              (beside (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white")
-                      (square SIZE "solid" "black")
-                      (square SIZE "solid" "white"))))
 
 
 ;;COMPLETE-BOARD
