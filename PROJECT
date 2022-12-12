@@ -80,7 +80,7 @@
 
 
 ;; Data Type - Token
-; A Token is a structure (make-token team super coordinates):
+; A Token is a structure (make-token color super coordinates):
 ;             where         color          : Team      
 ;                           super          : Boolean 
 ;                           coordinates    : Posn ; the elements are integer positive Numbers between 0 and 7 (both included)
@@ -137,12 +137,29 @@
 (define INITIAL-STATE (make-table BOARD TOKENS-LIST (make-control #false #false) (make-team "W" W-TOKEN) #false))
 
 ;///////////////////////////////////
-;;;; Main functions of the game 
+;;;; MAIN FUNCTIONS OF THE GAME 
 ;///////////////////////////////////
+
+;;; RECOGNITION OF THE SQUARE BY THE POSN
+
+;; Data Type
+; We need Posn as both as input and output
+
+;; Input/Output
+; get-id-by-position : Posn -> Posn
+; returns the posn of the square with respect of the position of the mouse
+; header: (define (get-id-by-position pos) (make-posn 0 0))
+
+;; Examples
+
+;; Template
+
+;; Code
 
 (define (get-id-by-position pos) ; return id of square by position of mouse 
   (make-posn (floor (- (abs (/ (posn-x pos) SIZE)) 0.4)) (floor (- (abs (/ (posn-y pos) SIZE)) 0.4)))) ; Uncalibrated version, to test the rest of the functionality
 
+;;; 
 
 (define (change-position state) ; delete token from start pos and add it on end pos
   (make-table
@@ -157,8 +174,10 @@
    (change-player state)
    (no-tokens state)))
 
+;;; 
+
 (define (remove-element state pos) ; state and posn of token we want delete
-  (remove #false (map (lambda (item)
+  (remove #false (map (lambda (item) ; ?
          (if (and (= (posn-x (token-coordinates item)) (posn-x pos))
                   (= (posn-y (token-coordinates item)) (posn-y pos))) #false item))
          (table-tokens state))))
@@ -178,19 +197,18 @@
                                           (make-posn (posn-x (control-end (table-move state)))
                                                      (posn-y (control-end (table-move state)))))))))
       
-  
-
-;/////////////////
+ 
 
 
-;Movement checker
+;; Movement checker
 
-(define (get-token-by-pos state pos) ;Return list<token> or empty list
-  (filter (lambda (item)
-         (and (= (posn-x (token-coordinates item)) (posn-x pos))
-                  (= (posn-y (token-coordinates item)) (posn-y pos))))
-         (table-tokens state))
-    )
+
+(define (get-token-by-pos state pos) ; Return list<token> or empty list
+  (filter
+   (lambda (item)
+    (and (= (posn-x (token-coordinates item)) (posn-x pos))
+         (= (posn-y (token-coordinates item)) (posn-y pos))))
+  (table-tokens state)))
 
 
 
@@ -214,7 +232,7 @@
                        (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
                   
                   (and (token-super (first start-token))
-                       (posn-equal? (posn-abs (posn-subtract (control-start (table-move state))
+                       (equal? (posn-abs (posn-subtract (control-start (table-move state))
                                                              (control-end (table-move state)))) (make-posn 1 1))))) #false]
            [else #true]))
 
@@ -242,7 +260,7 @@
                                  (invert-team (team-name (token-color (first start-token))))))
                   
                   (and (token-super (first start-token))
-                       (posn-equal? (posn-abs (posn-subtract (control-start (table-move state))
+                       (equal? (posn-abs (posn-subtract (control-start (table-move state))
                                                              (control-end (table-move state)))) (make-posn 2 2))
                        (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state)))))))
                                  (invert-team (team-name (token-color (first start-token)))))))) #false]
@@ -250,65 +268,242 @@
 
 
 
+;;; FIND MIDDLE TOKEN FUNCTION 
 
-(define (find-middle start-pos end-pos) ;return posn of middle token 
-  (make-posn (+ (posn-x start-pos) (/ (- (posn-x end-pos) (posn-x start-pos)) 2))
-             (+ (posn-y start-pos) (/ (- (posn-y end-pos) (posn-y start-pos)) 2))))
+;; Data Type
+; We need type Posn as both input and output
 
+;; Input/Output
+; find-middle : Posn Posn -> Posn
+; returns the posn which is located between two posns (these are diagonally located)    
+; header: (define (find-middle pos1 pos2) pos1) 
+
+;; Examples
+
+(check-expect (find-middle (make-posn 1 2) (make-posn 3 4)) (make-posn 2 3))
+(check-expect (find-middle (make-posn 4 3) (make-posn 2 1)) (make-posn 3 2))
+
+;; Template
+
+; (define (find-middle start-pos end-pos)  
+;   ... (posn-x pos1) ... (posn-y pos1) ... (posn-x pos2) ... (posn-y pos2) ...)
+
+;; Code
+
+(define (find-middle pos1 pos2)  
+  (make-posn (+ (posn-x pos1) (/ (- (posn-x pos2) (posn-x pos1)) 2))
+             (+ (posn-y pos1) (/ (- (posn-y pos2) (posn-y pos1)) 2))))
+
+
+
+;;; SUBTRACT POSNS FUNCTION
+
+;; Data Type
+; We need type Posn as both input and output
+
+;; Input/Output
+; posn-subtract : Posn Posn -> Posn
+; returns the difference between the first input and the second one  
+; header: (define (posn-subtract pos1 pos2) pos1) 
+
+;; Examples
+
+(check-expect (posn-subtract (make-posn 5 6) (make-posn 2 2)) (make-posn 3 4))
+(check-expect (posn-subtract (make-posn 7 2) (make-posn 4 1)) (make-posn 3 1))
+
+;; Template
+
+; (define (posn-subtract pos1 pos2)
+;   ... (posn-x pos1) ... (posn-y pos1) ... (posn-x pos2) ... (posn-y pos2) ...) 
+
+;; Code
 
 (define (posn-subtract pos1 pos2)
   (make-posn (- (posn-x pos1) (posn-x pos2))
              (- (posn-y pos1) (posn-y pos2))))
 
 
-(define (posn-equal? pos1 pos2)
-  (if (and (= (posn-x pos1) (posn-x pos2))
-             (= (posn-y pos1) (posn-y pos2))) #true #false))
+;;; COORDINATES IN ABSOLUTE VALUE
 
+;; Data Type
+; We need type Posn as both input and output
+
+;; Input/Output
+; posn-abs : Posn -> Posn
+; returns a posn with all the coordinates in absolute value of an input 
+; header: (define (posn-abs pos) pos)
+
+;; Examples
+
+(check-expect (posn-abs (make-posn 3 -2)) (make-posn 3 2))
+(check-expect (posn-abs (make-posn -2 5)) (make-posn 2 5))
+
+;; Template
+
+; (define (posn-abs pos)
+;   ... posn-x pos ... posn-y pos ...)
+
+;; Code
 
 (define (posn-abs pos)
   (make-posn (abs (posn-x pos)) (abs (posn-y pos))))
 
+;;; TEAM INVERSION FUNCTION 1
 
+;; Data Type
+; We need type String as both input and output
 
-(define (change-player state) ; return "B" team if input was "W" team and "W" if it was "B" team
+;; Input/Output
+; change-player : String -> Team
+; switches into "B" team if input was "W" team and "W" if it was "B" team
+; header: (define (invert-team player) "B")
+
+;; Tests
+
+(check-expect (change-player INITIAL-STATE) (make-team "B" B-TOKEN))
+(check-expect (change-player (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                                                     (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                                     (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                                     (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                                     (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 7 6))
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 0 7))
+                                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 2 7)))
+
+                                         (make-control #false #false) (make-team "B" B-TOKEN) #false)) (make-team "W" W-TOKEN)) 
+
+;; Template
+
+; (define (change-player state) 
+;   (cond
+;     [(string=? (team-name (table-player state)) "W") (make-team "B" B-TOKEN)]
+;     [else (make-team "W" W-TOKEN)]))
+
+;; Code
+
+(define (change-player state) 
   (cond
     [(string=? (team-name (table-player state)) "W") (make-team "B" B-TOKEN)]
     [else (make-team "W" W-TOKEN)]))
 
 
-(define (invert-team team-name) ; return "B" team if input was "W" team and "W" if it was "B" team
-  (cond
-    [(string=? team-name "W") "B"]
-    [else "W"]))
-
-;;; Super checker 
+;;; TEAM INVERSION FUNCTION 2
 
 ;; Data Type
-; We need Table as input and Boolean as output
+; We need type String as both input and output
 
 ;; Input/Output
-; super? : Table -> Boolean
-; checks if the list of tokens is empty or not, which means that somebody lost the game
-; header: (define (super? state) state)
+; invert-team : String -> String
+; switches into "B" team if input was "W" team and "W" if it was "B" team
+; header: (define (invert-team player) "B")
 
 ;; Tests
 
-
+(check-expect (invert-team "W") "B")
+(check-expect (invert-team "B") "W")
 
 ;; Template
 
+; (define (invert-team player)
+;   (cond
+;     [(string=? player "W") ... player ...]
+;     [else ... player ...]))
 
+;; Code
+
+(define (invert-team player)
+  (cond
+    [(string=? player "W") "B"]
+    [else "W"]))
+
+
+;;; SUPER CHECKER 
+
+;; Data Type
+; We need type Posn and Team as input and Boolean as output
+
+;; Input/Output
+; super? : Posn Team -> Boolean
+; checks if a token has reached the other side of the board
+; header: (define (super? pos team) #true)
+
+;; Tests
+
+(check-expect (super? (make-posn 4 7) (make-team "W" W-TOKEN)) #true)
+(check-expect (super? (make-posn 1 0) (make-team "B" B-TOKEN)) #true)
+(check-expect (super? (make-posn 2 3) (make-team "W" W-TOKEN)) #false)
+(check-expect (super? (make-posn 5 4) (make-team "B" W-TOKEN)) #false)
+
+;; Template
+
+; (define (super? pos team) 
+;  ... (posn-y pos) ... (team-name team) ...)
 
 ;; Code
 
 
-(define (super? pos team) ;Check if token is super now return boolean
+(define (super? pos team) 
   (if
    (or (and (= (posn-y pos) 7) (string=? (team-name team) "W"))
-       (and (= (posn-y pos) 0) (string=? (team-name team) "B"))) #true #false))
+       (and (= (posn-y pos) 0) (string=? (team-name team) "B"))) #true
+  #false))
 
 
+
+;;; NO-TOKENS CHECKER
+
+;; Data Type
+; We need Table ad Boolean
+
+;; Input/Output
+; no-tokens : Table -> Boolean
+; checks if eather one team or the other has lost all the tokens
+; header: (define (no-tokens state) state)
+
+;; Tests
+
+(check-expect (no-tokens INITIAL-STATE) #false)
+(check-expect (no-tokens (make-table BOARD (list (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                                                 (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                                 (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))) (make-control #false #false) (make-team "W" W-TOKEN) #true)) #true) 
+
+;; Template
+
+; (define (no-tokens state)
+;   (if
+;    (or
+;     (= (length
+;               (filter
+;                (lambda (item)
+;                 ... (team-name item) ... (token-color item)...)
+;                ... (table-tokens state) ... )) 0)
+;     (= (length
+;               (filter
+;                (lambda (item)
+;                 ... (team-name item) ... (token-color item)...)
+;                ... (table-tokens state) ... )) 0)) ... state ...
+;    ... state ...))
+
+;; Code
+
+(define (no-tokens state)
+  (if
+   (or
+    (= (length
+              (filter
+               (lambda (item)
+                (string=? (team-name (token-color item)) "W")) 
+               (table-tokens state))) 0)
+    (= (length
+              (filter
+               (lambda (item)
+                (string=? (team-name (token-color item)) "B"))
+               (table-tokens state))) 0)) #true
+   #false))
 
 ;/////////////////////////
 ;;;; BIG BANG FUNCTIONS 
@@ -430,45 +625,6 @@
         (no-tokens state))]
        [else state])]
     [else state]))
-
-
-;;; NO-TOKENS CHECKER
-
-;; Data Type
-; We need Table ad Boolean
-
-;; Input/Output
-; no-tokens : Table -> Boolean
-; checks if eather one team or the other has lost all the tokens
-; header: (define (no-tokens state) state)
-
-;; Tests
-
-(check-expect (no-tokens INITIAL-STATE) #false)
-(check-expect (no-tokens (make-table BOARD (list (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
-                                                 (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
-                                                 (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))) (make-control #false #false) (make-team "W" W-TOKEN) #true)) #true) 
-
-;; Template
-
-
-
-;; Code
-
-(define (no-tokens state)
-  (if
-   (or
-    (= (length
-              (filter
-               (lambda (item)
-                (string=? (team-name (token-color item)) "W"))
-               (table-tokens state))) 0)
-    (= (length
-              (filter
-               (lambda (item)
-                (string=? (team-name (token-color item)) "B"))
-               (table-tokens state))) 0)) #true
-   #false))
 
 
 ;;; WINNER CHECKER
