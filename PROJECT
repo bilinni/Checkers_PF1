@@ -86,44 +86,66 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Black token
+(define B-TOKEN (overlay
+  (scale/xy 0.234375
+            0.234375
+   (bitmap "B-TOKEN.png")) (circle 42 "solid" "white")))
+
+;; White token
+(define W-TOKEN (overlay
+  (scale/xy 0.234375
+            0.234375
+   (bitmap "W-TOKEN.png")) (circle 42 "solid" "white")))
+
+;; Black super token
+(define B-SUPER-TOKEN (overlay
+  (scale/xy (/ 120 512)
+            (/ 120 512)
+   (bitmap "B-SUPER-TOKEN.png")) (circle 40 "solid" "white")))
+
+;; White super token 
+(define W-SUPER-TOKEN (overlay
+  (scale/xy (/ 120 512)
+            (/ 120 512)
+   (bitmap "W-SUPER-TOKEN.png")) (circle 40 "solid" "white")))
+
+;; White square
+(define W-SQUARE
+  (scale/xy 0.2
+            0.2985074627
+   (bitmap/url "https://i.pinimg.com/originals/01/13/f9/0113f94f11c47c63ce2221645121b863.jpg")))
+
+
+;; Black square
+(define B-SQUARE
+  (scale/xy 0.1960784314
+            0.2745995423
+   (bitmap/url "https://media.istockphoto.com/id/953189548/photo/texture-wood.jpg?s=612x612&w=0&k=20&c=gpZ9d3OtFYaf3KmrR80_81Vq8Yf4aRVAlTO4u3GlnJQ=")))
 
 ;; Square size
 (define SIZE 120)
-
-;; White Token
-(define W-TOKEN 
-   (circle (/ SIZE 2) "solid" "gray"))
-
-;; Black Token
-(define B-TOKEN
-   (circle (/ SIZE 2) "solid" "red"))
-
-(define B-TOKEN-SUPER
-   (overlay (circle (/ SIZE 2) "outline" "gold") B-TOKEN))
-
-(define W-TOKEN-SUPER
-   (overlay (circle (/ SIZE 2) "outline" "gold") W-TOKEN))
 
 
 
 ;; Board
 (define BOARD (above
-              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              (beside W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE)
               
-              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
+              (beside B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE)
 
-              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              (beside W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE)
               
-              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
+              (beside B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE)
               
-              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              (beside W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE)
               
-              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))
+              (beside B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE)
               
-              (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
+              (beside W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE)
               
-              (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))))
-    
+              (beside B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE B-SQUARE W-SQUARE)))    
+
 
 ;; Tokens list 
 (define TOKENS-LIST (list
@@ -177,18 +199,24 @@
 
 ;; Input/Output
 ; get-id-by-position : Posn -> Posn
-; returns the posn of the square with respect of the position of the mouse
+; returns the posn of the square with respect of the position of the mouse.
 ; header: (define (get-id-by-position pos) (make-posn 0 0))
 
 ;; Examples
 
+(check-expect (get-id-by-position (make-posn 234.5 124.7)) (make-posn 1 1))
+(check-expect (get-id-by-position (make-posn 653 253.2)) (make-posn 5 2))
+
 ;; Template
+
+; (define (get-id-by-position pos)  
+;   ... (posn-x pos) ... (posn-y pos) ...)
 
 ;; Code
 
-(define (get-id-by-position pos) ; return id of square by position of mouse 
-  (make-posn (floor (- (abs (/ (posn-x pos) SIZE)) 0.4)) (floor (- (abs (/ (posn-y pos) SIZE)) 0.4)))) ; Uncalibrated version, to test the rest of the functionality
 
+(define (get-id-by-position pos)  
+  (make-posn (floor (abs (/ (posn-x pos) SIZE))) (floor (abs (/ (posn-y pos) SIZE)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -216,35 +244,75 @@
               (append
                (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 6))
                                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 0 1)))
-               (list (make-token (make-team "B" (overlay (circle (/ SIZE 2) "outline" "gold") B-TOKEN)) #true (make-posn 1 0)))))
+               (list (make-token (make-team "B" B-SUPER-TOKEN) #true (make-posn 1 0)))))
+
+(check-expect (add-element (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 6))
+                                                   (make-token (make-team "B" B-TOKEN) #false (make-posn 0 1))) (make-control (make-posn 7 6) (make-posn 6 7)) (make-team "W" W-TOKEN) #false))
+              (append
+               (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 6))
+                                                   (make-token (make-team "B" B-TOKEN) #false (make-posn 0 1)))
+               (list (make-token (make-team "W" W-SUPER-TOKEN) #true (make-posn 6 7)))))
                                                     
 ;; Template
 
 ; (define (add-element state)
-;   (if
-;    (or (super? (control-end (table-move state)) (table-player state))                                         ; if the token is going to be a super token, or
-;        (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))      ; , else add a token with respect of who and what token is moving
-;    ... (table-tokens state) ... (team-name (table-player state)) ... (team-image (table-player state)) ...
-;    ... (posn-x (control-end (table-move state))) ... (posn-y (control-end (table-move state))) ... (table-player state) 
+;   (cond
+;    [(and                                                                                                                      ; if the token is white and is going to be a super token, or it was so already, ...
+;      (or (super? (control-end (table-move state)) (table-player state)) 
+;             (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
+;      (equal? (team-name (table-player state)) "W"))
+;
+;     ... (table-tokens state) ... (team-name (table-player state)) ... (team-image (table-player state)) ...    
+;     ... (posn-x (control-end (table-move state))) ... (posn-y (control-end (table-move state))) ... (table-player state) ...]
+;
+;    [(and                                                                                                                      ; if the token is black and is going to be a super token, or it was so already, ...
+;      (or (super? (control-end (table-move state)) (table-player state))                                       
+;             (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
+;      (equal? (team-name (table-player state)) "B"))
+;
+;     ... (table-tokens state) ... (team-name (table-player state)) ... (team-image (table-player state)) ...    
+;     ... (posn-x (control-end (table-move state))) ... (posn-y (control-end (table-move state))) ... (table-player state) ...]
+;
+;    [else                                                                                                                      ; else, ...
+;
+;     ... (table-tokens state) ... (team-name (table-player state)) ... (team-image (table-player state)) ...    
+;     ... (posn-x (control-end (table-move state))) ... (posn-y (control-end (table-move state))) ... (table-player state) ...]                                               
+;      
 
 
 ;; Code
 
 (define (add-element state)
-  (if
-   (or (super? (control-end (table-move state)) (table-player state)) 
-       (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
-   (append
-    (table-tokens state)
-    (list (make-token (make-team (team-name (table-player state)) (overlay (circle (/ SIZE 2) "outline" "gold") (team-image (table-player state))))
-                      #true
-                      (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))
+  (cond
+    [(and
+      (or (super? (control-end (table-move state)) (table-player state)) 
+             (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
+      (equal? (team-name (table-player state)) "W"))
+     (append
+      (table-tokens state)
+      (list (make-token (make-team (team-name (table-player state)) W-SUPER-TOKEN)
+                        #true
+                        (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))]
 
-   (append
-    (table-tokens state)
-    (list (make-token (table-player state)
-                      #false
-                      (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))))
+    [(and
+      (or (super? (control-end (table-move state)) (table-player state)) 
+             (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
+      (equal? (team-name (table-player state)) "B"))
+     (append
+      (table-tokens state)
+      (list (make-token (make-team (team-name (table-player state)) B-SUPER-TOKEN)
+                        #true
+                        (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))]
+
+    [else
+     (append
+      (table-tokens state)
+      (list (make-token (table-player state)
+                        #false
+                        (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))]))
+
+
+   
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -279,6 +347,29 @@
                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 2 5))
                                     (make-token (make-team "B" B-TOKEN) #false (make-posn 4 5))))
 
+(check-expect (remove-element (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 5 0))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))) (make-control #false #false) (make-team "W" W-TOKEN) #false) (make-posn 5 0))
+
+                              (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))))
+
 ;; Template
 
 ; (define (remove-element state pos)
@@ -290,10 +381,10 @@
 ;; Code
 
 (define (remove-element state pos)
-  (remove #false (map
+  (remove #true (map
                   (lambda (item)
                     (if (and (= (posn-x (token-coordinates item)) (posn-x pos))
-                             (= (posn-y (token-coordinates item)) (posn-y pos))) #false
+                             (= (posn-y (token-coordinates item)) (posn-y pos))) #true
                      item))
                  (table-tokens state))))
 
@@ -310,7 +401,8 @@
 
 ;; Input/Output
 ; change-position : Table -> Table 
-; changes the current state to a new state where a token has been moved 
+; changes the current state to a new state where a token has been moved. In order to work we need the auxiliary functions
+; change-player (which changes the player's turn) and no-tokens (which checks if a team has lost all the tokens) 
 ; header: (define (change-position state) state)
 
 ;; Examples
@@ -344,6 +436,34 @@
                         (make-token (make-team "B" B-TOKEN) #false (make-posn 6 7))
 
                         (make-token (make-team "B" B-TOKEN) #false (make-posn 1 4))) (make-control #false #false) (make-team "W" W-TOKEN) #false)) ; new token in posn 1 4
+
+(check-expect (change-position (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 5 0))
+                                                       (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                                                       (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                                       (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                                       (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                                       (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+
+                                                       (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                                                       (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                                       (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                                                       (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))) (make-control (make-posn 6 1) (make-posn 5 2)) (make-team "W" W-TOKEN) #false))
+
+              (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 5 0))
+                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                      
+
+                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))
+
+                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 5 2))) (make-control #false #false) (make-team "B" B-TOKEN) #false))
+
+              
 
 ;; Template
 
@@ -410,18 +530,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;                                                                          Move function
+;                                                                           Move checker 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; MOVE FUNCTION
 
 ;; Data Type
 ; We need type Table and Token as input, and Boolean as output
 
 ;; Input/Output
-; allow-move? : Table Token Token -> Boolean
-; checks if a move is valid or not (da correggere)
+; allow-move? : Table List<Token> List<Token> -> Boolean
+; checks if a move is valid or not.  
 ; header (define (allow-move? state token1 token2) #true)
 
 ;; Examples
@@ -477,14 +596,19 @@
     [else #true]))
 
 
-;;; ATTACK FUNCTION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                           Attack checker 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type Table and Token as input, and Boolean as output
 
 ;; Input/Output
-; allow-attack? : Table Token Token -> Boolean
-; checks if an attack is valid or not (da correggere)
+; allow-attack? : Table List<Token> List<Token> -> Boolean
+; checks if an attack is valid or not 
 ; header (define (allow-attack? state token1 token2) #true)
 
 ;; Examples
@@ -495,10 +619,10 @@
 
 ;(define (allow-attack? state token1 token2)
 ;  (cond
-;    [(= (length token1) 0) #false]
-;    [(= (length (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))) 0) #false]
-;    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) #false]
-;    [(not (= (length token2) 0)) #false]
+;    [(= (length token1) 0) ... state token1 token2 ...]
+;    [(= (length (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))) 0) ... state token1 token2 ...]
+;    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) ... state token1 token2 ...]
+;    [(not (= (length token2) 0)) ... state token1 token2 ...]
 ;    [(not
 ;      (or
 ;       (and (not (token-super (first token1)))
@@ -515,8 +639,8 @@
 ;                  
 ;       (and (token-super (first token1))
 ;            (equal? (posn-abs (posn-subtract (control-start (table-move state)) (control-end (table-move state)))) (make-posn 2 2))
-;            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1)))))))) #false]
-;    [else #true]))
+;            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1)))))))) ... state token1 token2 ...]
+;    [else ... state token1 token2 ...]))
 
 ;; Code
 
@@ -546,8 +670,12 @@
     [else #true]))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; FIND MIDDLE TOKEN FUNCTION 
+;                                                               Find middle token (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 
 
 ;; Data Type
 ; We need type Posn as both input and output
@@ -574,8 +702,12 @@
              (+ (posn-y pos1) (/ (- (posn-y pos2) (posn-y pos1)) 2))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; SUBTRACT POSNS FUNCTION
+;                                                               Subtract posn's (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type Posn as both input and output
@@ -601,8 +733,12 @@
   (make-posn (- (posn-x pos1) (posn-x pos2))
              (- (posn-y pos1) (posn-y pos2))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; COORDINATES IN ABSOLUTE VALUE
+;                                                               Coordinates in absolute value (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type Posn as both input and output
@@ -627,7 +763,12 @@
 (define (posn-abs pos)
   (make-posn (abs (posn-x pos)) (abs (posn-y pos))))
 
-;;; TEAM INVERSION FUNCTION 1
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                               Team inversion 1 (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type String as both input and output
@@ -669,8 +810,11 @@
     [(string=? (team-name (table-player state)) "W") (make-team "B" B-TOKEN)]
     [else (make-team "W" W-TOKEN)]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; TEAM INVERSION FUNCTION 2
+;                                                               Team inversion 2 (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Data Type
 ; We need type String as both input and output
@@ -699,8 +843,12 @@
     [(string=? player "W") "B"]
     [else "W"]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; SUPER CHECKER 
+;                                                                  Super checker (Auxiliary function) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type Posn and Team as input and Boolean as output
@@ -732,8 +880,12 @@
   #false))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; NO-TOKENS CHECKER
+;                                                      No-tokens checker (Auxiliary function for change-position) 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need Table ad Boolean
@@ -784,14 +936,20 @@
                (table-tokens state))) 0)) #true
    #false))
 
-;/////////////////////////
-;;;; BIG BANG FUNCTIONS 
-;/////////////////////////
+
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+;                                                                        BIG BANG FUNCTIONS 
+
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; RENDERING FUNCTION ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                        Rendering function 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; The input is type Table and the output is an Image
@@ -830,10 +988,11 @@
   (draw-tokens (table-image state) (table-tokens state))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;
-;;; MOUSE HANDLER ;;;  
-;;;;;;;;;;;;;;;;;;;;;
+;                                                                           Mouse handler
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;; Data Type
@@ -904,7 +1063,12 @@
     [else state]))
 
 
-;;; WINNER CHECKER
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                          Winner checker 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need type Table as input and type Boolean as output
