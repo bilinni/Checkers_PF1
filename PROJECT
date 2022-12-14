@@ -2,19 +2,93 @@
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname PROJECT) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 
-;///////////////////////////////
-;;;; COSTANTS AND STRUCTURES 
-;///////////////////////////////
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+;                                                                      COSTANTS AND STRUCTURES 
+
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 (require 2htdp/image)
 (require 2htdp/universe)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; BOARD AND TOKEN INFORMATIONS ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                             Structures   
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Data Type - Control
+; We introduce the data type Turn, which represents a Posn of Numbers (where the numbers are between 0 and 7, both included), and also the data type Maybe<Turn>,
+; which is one of:
+;  - a Turn
+;  - #false
+;
+; A Control is a structure (make-control start end):
+;      where         start     : Maybe<Turn>
+;                    end       : Maybe<Turn>
+;
+; Attention: start and end cannot be different, for example (make-control #false (make-posn 4 2)) is not defined! The possibilities are of the following form:
+; - (make-control #false #false), or
+; - (make-control (make-posn 4 5) (make-posn 5 4))
+;
+; interpretation: is meant to be eather moving a token from a starting position to an ending position, or not doing so 
+(define-struct control [start end])
+
+
+;; Data Types - Team
+; A TeamName is one of the following Strings:
+; - "W"
+; - "B"
+; which stand for `White` and `Black` 
+;
+; A team is a structure (make-team name image):
+;      where         name      : TeamName 
+;                    image     : Image
+;
+; interpretation: represents the team's turn     
+(define-struct team [name image])
+
+
+
+;; Data Type - Token
+; A Token is a structure (make-token color super coordinates):
+;             where         color          : Team      
+;                           super          : Boolean 
+;                           coordinates    : Posn ; the elements are integer positive Numbers between 0 and 7 as usual
+;
+; interpretation: is a token which is identified with it's color, it's attributes if it reaches the other side of the board (it's a `super` token if it is the case)
+;                 and it's position on the board
+(define-struct token [color super coordinates])
+
+;; Data Type - List<Token>
+; A List<Token> is one of the following:
+; - '() ; base case: EmptyList
+; recursive case: List with 1, 2, 3 ... elements
+; - (cons Token List<Token>)
+
+;: Data Type - Table
+; A Table is a structure (make-table image tokens control player won?)
+;    where          image          : Image
+;                   tokens         : List<Token>
+;                   move           : Control
+;                   player         : Team
+;                   won?           : Boolean
+;
+; interpretation: saves all the informations regarding the current state of the board,
+;                 namely the number of tokens of both player, control for moving a token, player's turn and if there is a winner:
+(define-struct table [image tokens move player won?])
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                    Board and Token Informations
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Square size
-(define SIZE 50)
+(define SIZE 120)
 
 ;; White Token
 (define W-TOKEN 
@@ -30,8 +104,7 @@
 (define W-TOKEN-SUPER
    (overlay (circle (/ SIZE 2) "outline" "gold") W-TOKEN))
 
-;; Border board
-(define BORDER (square (+(* SIZE 8)(* (* SIZE 8) (/ 1 26.67 )))"solid" "brown"))
+
 
 ;; Board
 (define BOARD (above
@@ -50,59 +123,7 @@
               (beside (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black"))
               
               (beside (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white") (square SIZE "solid" "black") (square SIZE "solid" "white"))))
-
-
-;; Complete board
-(define C-BOARD (overlay BOARD BORDER))    
-
-;;;;;;;;;;;;;;;;;;
-;;; STRUCTURES ;;;
-;;;;;;;;;;;;;;;;;;
-
-;; Data Type - Control
-; A Control is a structure (make-control start end):
-;      where         start      : Boolean
-;                    end        : Boolean
-;
-; interpretation: ? 
-(define-struct control [start end])
-
-
-
-;; Data Types - Team
-; A team is a structure (make-team name image):
-;      where         name      : is one of the Strings "W" or "B" which stands for `White` and `Black`
-;                    image     : Image
-;
-; interpretation: ?    
-(define-struct team [name image])
-
-
-
-;; Data Type - Token
-; A Token is a structure (make-token color super coordinates):
-;             where         color          : Team      
-;                           super          : Boolean 
-;                           coordinates    : Posn ; the elements are integer positive Numbers between 0 and 7 (both included)
-;
-; interpretation: is a token which is identified with it's color, it's attributes if it reaches the other side of the board (it's a `super` token if it is the case)
-;                 and it's position on the board
-(define-struct token [color super coordinates])
-
-
-
-;: Data Type - Table
-; A Table is a structure (make-table Image Tokens Control Player won?)
-;    where          image          : Image
-;                   tokens         : List<Token>
-;                   move           : Control
-;                   player         : Team
-;                   won?           : Boolean
-;
-; interpretation: Table saves all the informations regarding the current state of the board,
-;                 namely the number of tokens of both player, control for moving a token, player's turn and if there is a winner:
-(define-struct table [image tokens move player won?])
-
+    
 
 ;; Tokens list 
 (define TOKENS-LIST (list
@@ -130,17 +151,26 @@
                         (make-token (make-team "B" B-TOKEN) #false (make-posn 0 7))
                         (make-token (make-team "B" B-TOKEN) #false (make-posn 2 7))
                         (make-token (make-team "B" B-TOKEN) #false (make-posn 4 7))
-                        (make-token (make-team "B" B-TOKEN) #false (make-posn 6 7))
-                        ))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 6 7))))
 
-;; Initital state
+;; Initial state
 (define INITIAL-STATE (make-table BOARD TOKENS-LIST (make-control #false #false) (make-team "W" W-TOKEN) #false))
 
-;///////////////////////////////////
-;;;; MAIN FUNCTIONS OF THE GAME 
-;///////////////////////////////////
 
-;;; RECOGNITION OF THE SQUARE BY THE POSN
+
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+;                                                                      MAIN FUNCTIONS OF THE GAME  
+
+;//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                 Recognition of the square by posn
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Data Type
 ; We need Posn as both as input and output
@@ -159,51 +189,218 @@
 (define (get-id-by-position pos) ; return id of square by position of mouse 
   (make-posn (floor (- (abs (/ (posn-x pos) SIZE)) 0.4)) (floor (- (abs (/ (posn-y pos) SIZE)) 0.4)))) ; Uncalibrated version, to test the rest of the functionality
 
-;;; 
 
-(define (change-position state) ; delete token from start pos and add it on end pos
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                              Add a token in the current token's list
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Data Type
+; We need type Table as input and type List<Token> as output 
+
+;; Input/Output
+; add-element : Table -> List<Token> 
+; adds a new token in the current state and also in the token's list.
+; If the token becoms a super token, we create a new token with a new image, otherwise we create a new token with the same image  
+; header: (define (add-element state) state)
+
+;; Examples
+
+(check-expect (add-element (make-table BOARD TOKENS-LIST (make-control (make-posn 1 2) (make-posn 2 3)) (make-team "W" W-TOKEN) #false))
+              (append TOKENS-LIST (list (make-token (make-team "W" W-TOKEN) #false (make-posn 2 3))))) 
+
+(check-expect (add-element (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 6))
+                                                   (make-token (make-team "B" B-TOKEN) #false (make-posn 0 1))) (make-control (make-posn 0 1) (make-posn 1 0)) (make-team "B" B-TOKEN) #false))
+              (append
+               (list (make-token (make-team "W" W-TOKEN) #false (make-posn 7 6))
+                                                   (make-token (make-team "B" B-TOKEN) #false (make-posn 0 1)))
+               (list (make-token (make-team "B" (overlay (circle (/ SIZE 2) "outline" "gold") B-TOKEN)) #true (make-posn 1 0)))))
+                                                    
+;; Template
+
+; (define (add-element state)
+;   (if
+;    (or (super? (control-end (table-move state)) (table-player state))                                         ; if the token is going to be a super token, or
+;        (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))      ; , else add a token with respect of who and what token is moving
+;    ... (table-tokens state) ... (team-name (table-player state)) ... (team-image (table-player state)) ...
+;    ... (posn-x (control-end (table-move state))) ... (posn-y (control-end (table-move state))) ... (table-player state) 
+
+
+;; Code
+
+(define (add-element state)
+  (if
+   (or (super? (control-end (table-move state)) (table-player state)) 
+       (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
+   (append
+    (table-tokens state)
+    (list (make-token (make-team (team-name (table-player state)) (overlay (circle (/ SIZE 2) "outline" "gold") (team-image (table-player state))))
+                      #true
+                      (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))
+
+   (append
+    (table-tokens state)
+    (list (make-token (table-player state)
+                      #false
+                      (make-posn (posn-x (control-end (table-move state))) (posn-y (control-end (table-move state)))))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                             Remove token from the current token's list
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Data Type
+; We need type Table and Posn as input and type List<Token> as output 
+
+;; Input/Output
+; remove-element : Table Posn -> List<Token>  
+; deletes a token from the state and returns the list of token without   
+; header: (define (remove-element state pos) '())
+
+;; Examples
+
+(check-expect (remove-element (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 3 2))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 5 2))
+                                                      (make-token (make-team "W" W-TOKEN) #false (make-posn 7 2))
+
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 0 5))
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 2 5))
+                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 4 5))) (make-control #false #false) (make-team "B" B-TOKEN) #false) (make-posn 0 5))
+
+                              (list (make-token (make-team "W" W-TOKEN) #false (make-posn 3 2))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 5 2))
+                                    (make-token (make-team "W" W-TOKEN) #false (make-posn 7 2))
+
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 2 5))
+                                    (make-token (make-team "B" B-TOKEN) #false (make-posn 4 5))))
+
+;; Template
+
+; (define (remove-element state pos)
+;   (remove #false (map
+;                   (lambda (item)
+;                      ... (posn-x (token-coordinates item)) ... (posn-x pos) ... (posn-y (token-coordinates item)) ... (posn-y pos) ...
+;                  ... (table-tokens state) ...)))
+
+;; Code
+
+(define (remove-element state pos)
+  (remove #false (map
+                  (lambda (item)
+                    (if (and (= (posn-x (token-coordinates item)) (posn-x pos))
+                             (= (posn-y (token-coordinates item)) (posn-y pos))) #false
+                     item))
+                 (table-tokens state))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                    Change token's position
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Data Type
+; We need type Table as both input and output 
+
+;; Input/Output
+; change-position : Table -> Table 
+; changes the current state to a new state where a token has been moved 
+; header: (define (change-position state) state)
+
+;; Examples
+
+(check-expect (change-position (make-table BOARD TOKENS-LIST (make-control (make-posn 0 5) (make-posn 1 4)) (make-team "B" B-TOKEN) #false))
+                 (make-table BOARD (list
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 1 0))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 3 0))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 5 0))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 7 0))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 1 2))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 3 2))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 5 2))
+                        (make-token (make-team "W" W-TOKEN) #false (make-posn 7 2))
+
+                        
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 2 5))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 4 5))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 5 6))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 7 6))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 0 7))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 2 7))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 4 7))
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 6 7))
+
+                        (make-token (make-team "B" B-TOKEN) #false (make-posn 1 4))) (make-control #false #false) (make-team "W" W-TOKEN) #false)) ; new token in posn 1 4
+
+;; Template
+
+; (define (change-position state)
+; ... (table-image state) ... (table-move state) ... (table-player state) ... (table-won? state) ... (control-start (table-move state)))
+
+;; Code
+
+(define (change-position state)
   (make-table
    (table-image state)
    (remove-element (make-table
-                 (table-image state)
-                 (add-element state)
-                 (table-move state)
-                 (table-player state)
-                 (table-won? state)) (control-start (table-move state)))
+                   (table-image state)
+                   (add-element state)
+                   (table-move state)
+                   (table-player state)
+                   (table-won? state)) (control-start (table-move state)))
    (make-control #false #false)
    (change-player state)
    (no-tokens state)))
 
-;;; 
 
-(define (remove-element state pos) ; state and posn of token we want delete
-  (remove #false (map (lambda (item) ; ?
-         (if (and (= (posn-x (token-coordinates item)) (posn-x pos))
-                  (= (posn-y (token-coordinates item)) (posn-y pos))) #false item))
-         (table-tokens state))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (add-element state)
-  (if (or (super? (control-end (table-move state)) (table-player state))
-          (not (false? (token-super (first (get-token-by-pos state (control-start (table-move state))))))))
-      (append (table-tokens state) (list (make-token
-                                          (make-team (team-name (table-player state)) (overlay (circle (/ SIZE 2) "outline" "gold") (team-image (table-player state))))
-                                          #true
-                                          (make-posn (posn-x (control-end (table-move state)))
-                                                     (posn-y (control-end (table-move state)))))))
+;                                                                          Filter tokens 
 
-      (append (table-tokens state) (list (make-token
-                                          (table-player state)
-                                          #false
-                                          (make-posn (posn-x (control-end (table-move state)))
-                                                     (posn-y (control-end (table-move state)))))))))
-      
- 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; Movement checker
+;; Data Type
+; We need type Table and Posn as input, and type List<Token> as output
 
+;; Input/Output
+; get-token-by-pos : Table Posn -> List<Token>
+; finds the token whose coordinates coincide with a give posn
+; header: (define (get-token-by-pos state pos) table)
 
-(define (get-token-by-pos state pos) ; Return list<token> or empty list
+;; Examples
+
+(check-expect (get-token-by-pos INITIAL-STATE (make-posn 3 6)) (list (make-token (make-team "B" B-TOKEN) #false (make-posn 3 6))))
+(check-expect (get-token-by-pos (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 0 1))
+                                                        (make-token (make-team "W" W-TOKEN) #false (make-posn 2 1))
+                                                        (make-token (make-team "W" W-TOKEN) #false (make-posn 4 1))
+                                                        (make-token (make-team "W" W-TOKEN) #false (make-posn 6 1))
+                                                        (make-token (make-team "W" W-TOKEN) #false (make-posn 1 2))) (make-control #false #false) (make-team "B" B-TOKEN) #false ) (make-posn 23 1)) '())
+
+;; Template
+
+; (define (get-token-by-pos state pos) 
+;   (filter
+;    (lambda (item)
+;      ... (posn-x pos) ... (posn-y pos) ... (token-coordinates item) ...)
+;   ... (table-tokens state) ...))
+
+;; Code
+
+(define (get-token-by-pos state pos) 
   (filter
    (lambda (item)
     (and (= (posn-x (token-coordinates item)) (posn-x pos))
@@ -211,60 +408,142 @@
   (table-tokens state)))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                                                                          Move function
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; MOVE FUNCTION
+
+;; Data Type
+; We need type Table and Token as input, and Boolean as output
+
+;; Input/Output
+; allow-move? : Table Token Token -> Boolean
+; checks if a move is valid or not (da correggere)
+; header (define (allow-move? state token1 token2) #true)
+
+;; Examples
 
 
 
+;; Template
 
-(define (allow-move? state start-token end-token)    
-    (cond
-           [(= (length start-token) 0) #false]
-           [(not (string=? (team-name (table-player state)) (team-name (token-color (first start-token))))) #false]
-           [(not (= (length end-token) 0)) #false]
-           [(not (or
-                  (and (not (token-super (first start-token)))
-                       (string=? (team-name (token-color (first start-token))) "W")
-                       (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  1)
-                       (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
+;(define (allow-move? state token1 token2)
+;  (cond
+;    [(= (length token1) 0) ... state token1 token2 ...]
+;    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) ... state token1 token2 ...]
+;    [(not (= (length token2) 0)) ... state token1 token2 ...]
+;    [(not
+;      (or
+;       (and (not (token-super (first token1)))
+;            (string=? (team-name (token-color (first token1))) "W")
+;            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  1)
+;            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
+;                  
+;       (and (not (token-super (first token1)))
+;            (string=? (team-name (token-color (first token1))) "B")
+;            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -1)
+;            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
+;                  
+;       (and (token-super (first token1))
+;            (equal? (posn-abs (posn-subtract (control-start (table-move state)) (control-end (table-move state)))) (make-posn 1 1))))) ... state token1 token2 ...]
+;
+;    [else ... state token1 token2 ...]))
+
+;; Code
+
+(define (allow-move? state token1 token2)
+  (cond
+    [(= (length token1) 0) #false]
+    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) #false]
+    [(not (= (length token2) 0)) #false]
+    [(not
+      (or
+       (and (not (token-super (first token1)))
+            (string=? (team-name (token-color (first token1))) "W")
+            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  1)
+            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
                   
-                  (and (not (token-super (first start-token)))
-                       (string=? (team-name (token-color (first start-token))) "B")
-                       (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -1)
-                       (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
+       (and (not (token-super (first token1)))
+            (string=? (team-name (token-color (first token1))) "B")
+            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -1)
+            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 1))
                   
-                  (and (token-super (first start-token))
-                       (equal? (posn-abs (posn-subtract (control-start (table-move state))
-                                                             (control-end (table-move state)))) (make-posn 1 1))))) #false]
-           [else #true]))
+       (and (token-super (first token1))
+            (equal? (posn-abs (posn-subtract (control-start (table-move state)) (control-end (table-move state)))) (make-posn 1 1))))) #false]
+
+    [else #true]))
+
+
+;;; ATTACK FUNCTION
+
+;; Data Type
+; We need type Table and Token as input, and Boolean as output
+
+;; Input/Output
+; allow-attack? : Table Token Token -> Boolean
+; checks if an attack is valid or not (da correggere)
+; header (define (allow-attack? state token1 token2) #true)
+
+;; Examples
 
 
 
-(define (allow-attack? state start-token end-token)    
-    (cond
-           [(= (length start-token) 0) #false]
-           [(= (length (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))) 0) #false]
-           [(not (string=? (team-name (table-player state)) (team-name (token-color (first start-token))))) #false]
-           [(not (= (length end-token) 0)) #false]
-           [(not (or
-                  (and (not (token-super (first start-token)))
-                       (string=? (team-name (token-color (first start-token))) "W")
-                       (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  2)
-                       (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
-                       (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state)))))))
-                                 (invert-team (team-name (token-color (first start-token))))))
+;; Template
+
+;(define (allow-attack? state token1 token2)
+;  (cond
+;    [(= (length token1) 0) #false]
+;    [(= (length (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))) 0) #false]
+;    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) #false]
+;    [(not (= (length token2) 0)) #false]
+;    [(not
+;      (or
+;       (and (not (token-super (first token1)))
+;            (string=? (team-name (token-color (first token1))) "W")
+;            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  2)
+;            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
+;            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1))))))
+;                  
+;       (and (not (token-super (first token1)))
+;            (string=? (team-name (token-color (first token1))) "B")
+;            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -2)
+;            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
+;            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1))))))
+;                  
+;       (and (token-super (first token1))
+;            (equal? (posn-abs (posn-subtract (control-start (table-move state)) (control-end (table-move state)))) (make-posn 2 2))
+;            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1)))))))) #false]
+;    [else #true]))
+
+;; Code
+
+(define (allow-attack? state token1 token2)
+  (cond
+    [(= (length token1) 0) #false]
+    [(= (length (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))) 0) #false]
+    [(not (string=? (team-name (table-player state)) (team-name (token-color (first token1))))) #false]
+    [(not (= (length token2) 0)) #false]
+    [(not
+      (or
+       (and (not (token-super (first token1)))
+            (string=? (team-name (token-color (first token1))) "W")
+            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state))))  2)
+            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
+            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1))))))
                   
-                  (and (not (token-super (first start-token)))
-                       (string=? (team-name (token-color (first start-token))) "B")
-                       (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -2)
-                       (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
-                       (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state)))))))
-                                 (invert-team (team-name (token-color (first start-token))))))
+       (and (not (token-super (first token1)))
+            (string=? (team-name (token-color (first token1))) "B")
+            (= (- (posn-y (control-end (table-move state))) (posn-y (control-start (table-move state)))) -2)
+            (= (abs (- (posn-x (control-end (table-move state))) (posn-x (control-start (table-move state))))) 2)
+            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1))))))
                   
-                  (and (token-super (first start-token))
-                       (equal? (posn-abs (posn-subtract (control-start (table-move state))
-                                                             (control-end (table-move state)))) (make-posn 2 2))
-                       (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state)))))))
-                                 (invert-team (team-name (token-color (first start-token)))))))) #false]
-           [else #true]))
+       (and (token-super (first token1))
+            (equal? (posn-abs (posn-subtract (control-start (table-move state)) (control-end (table-move state)))) (make-posn 2 2))
+            (string=? (team-name (token-color (first (get-token-by-pos state (find-middle (control-start (table-move state)) (control-end (table-move state))))))) (invert-team (team-name (token-color (first token1)))))))) #false]
+    [else #true]))
 
 
 
@@ -374,7 +653,7 @@
                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 0 7))
                                                      (make-token (make-team "B" B-TOKEN) #false (make-posn 2 7)))
 
-                                         (make-control #false #false) (make-team "B" B-TOKEN) #false)) (make-team "W" W-TOKEN)) 
+                                                (make-control #false #false) (make-team "B" B-TOKEN) #false)) (make-team "W" W-TOKEN)) 
 
 ;; Template
 
@@ -524,11 +803,6 @@
 
 ;; Examples
 
-;(check-expect (draw (make-table BOARD (list (make-token (make-team "W" W-TOKEN) #false (make-posn 5 0))
-;                                            (make-token (make-team "W" W-TOKEN) #false (make-posn 1 2))
-;                                            (make-token (make-team "B" B-TOKEN) #false (make-posn 6 5))
-;                                            (make-token (make-team "B" B-TOKEN) #false (make-posn 1 6))) (make-control #false #false) (make-team "W" W-TOKEN) #false))
-;              )
 
 
 ;; Template
@@ -563,11 +837,11 @@
 
 
 ;; Data Type
-; We need a Table, two Numbers and a String as input, and a Table as output
-; We introduce also type MouseEvent, which represents one of the following Strings:
-;                "botton-down"    : start drawing a line
-;                "drag"           : move the current line's end point
+; We introduce the data type MouseEvent, which represents one of the following Strings:
+;                "botton-down"    : select one token to move
+;                "drag"           : move the current token to the new position
 ;                "botton-up"      : add the current line to the canvas
+; Other types that we need are Table and Number
 
 ;; Input/output
 ; handle-mouse: Table Number Number MouseEvent -> Table
@@ -576,20 +850,23 @@
 
 ;; Examples
 
-; (check-expect (handle-mouse (make-AppState CANVAS g #f) 5 2 "button-down") (make-AppState CANVAS (make-Line (make-posn 5 2) (make-posn 0 0)) #f))
-; (check-expect (handle-mouse (make-AppState CANVAS (make-Line (make-posn 3 1) (make-posn 1 1)) #f) 5 6 "drag") (make-AppState CANVAS (make-Line (make-posn 3 1) (make-posn 5 6)) #false))
-
 
 
 ;; Template
 
 ; (define (handle-mouse state x y event)
 ;   (cond
-;     [(string=? "button-down" event) ... state x y event ...]
+;     [(string=? "button-down" event) ... (table-image state) ... (table-tokens state) ... (table-player state) ... (table-won?) ... x y ...]
 ;     [(and (string=? "drag" event) (not (false? (control-start (table-move state)))))
-;      ... state x y event ...]
+;      ... (table-image state) ... (table-tokens state) ... (control-start (table-move state)) ... (table-player state) ... (table-won?) ... x y ...]
 ;     [(and (string=? "button-up" event) (not (false? (control-start (table-move state)))))
-;      ... state x y event ...]
+;      (cond
+;        [(allow-move? state (get-token-by-pos state (control-start (table-move state)))
+;                      (get-token-by-pos state (control-end (table-move state)))) ... state x y event ...]
+;        [(allow-attack? state (get-token-by-pos state (control-start (table-move state)))
+;                      (get-token-by-pos state (control-end (table-move state))))
+;          ... (table-image state) ... (control-start (table-move state)) ... (control-end (table-move state)) ... (control-start (table-move state)) ... x y ...] 
+;        [else ... state x y event ...])]
 ;     [else ... state x y event ...]))
 
 
@@ -619,10 +896,10 @@
                      (get-token-by-pos state (control-end (table-move state))))
         (make-table
          (table-image state)
-        (remove-element (change-position state) (find-middle (control-start (table-move state)) (control-end (table-move state))))
-        (make-control (control-start (table-move state)) (get-id-by-position (make-posn x y)))
-        (change-player state)
-        (no-tokens state))]
+         (remove-element (change-position state) (find-middle (control-start (table-move state)) (control-end (table-move state))))
+         (make-control (control-start (table-move state)) (get-id-by-position (make-posn x y)))
+         (change-player state)
+         (no-tokens state))]
        [else state])]
     [else state]))
 
@@ -668,6 +945,10 @@
 
 
 ;;; MAIN FUNCTION
+
+;; Data Type
+
+;; Input/Output
 
 (big-bang INITIAL-STATE
   [to-draw draw]
